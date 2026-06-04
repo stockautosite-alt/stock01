@@ -1,53 +1,31 @@
-import { useEffect } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+import { AuthProvider } from "@/context/AuthContext";
+import Layout from "@/components/Layout";
+import Home from "@/pages/Home";
+import ComingSoon from "@/pages/ComingSoon";
 
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
+        <AuthProvider>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/veiculos" element={<ComingSoon title="Listagem de veículos" />} />
+              <Route path="/veiculo/:slug" element={<ComingSoon title="Anúncio" />} />
+              <Route path="/revendedores" element={<ComingSoon title="Revendedores" />} />
+              <Route path="/revendedor/:slug" element={<ComingSoon title="Mini-site do revendedor" />} />
+              <Route path="/planos" element={<ComingSoon title="Planos" />} />
+              <Route path="/login" element={<ComingSoon title="Entrar" />} />
+              <Route path="/cadastro" element={<ComingSoon title="Cadastrar loja" />} />
+              <Route path="/painel" element={<ComingSoon title="Painel do revendedor" />} />
+              <Route path="/admin" element={<ComingSoon title="Painel ADM" />} />
+              <Route path="*" element={<ComingSoon title="Página não encontrada" />} />
+            </Routes>
+          </Layout>
+        </AuthProvider>
       </BrowserRouter>
     </div>
   );
