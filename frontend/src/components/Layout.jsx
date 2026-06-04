@@ -1,0 +1,119 @@
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { NAV } from "@/constants/testIds";
+import { Menu, X, ChevronRight } from "lucide-react";
+
+const linkBase = "text-sm font-bold tracking-tight uppercase hover:opacity-60 transition-opacity";
+
+export default function Layout({ children }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  const onLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-white text-black" style={{ fontFamily: "Satoshi, Inter, system-ui, sans-serif" }}>
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-zinc-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <Link to="/" data-testid={NAV.logo} className="flex items-center gap-2">
+            <span className="inline-block w-7 h-7 bg-black" />
+            <span className="font-black tracking-tighter text-xl" style={{ fontFamily: "Cabinet Grotesk, Inter, sans-serif" }}>
+              STOCK<span className="text-[#FF3B30]">AUTO</span>
+            </span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-8">
+            <NavLink to="/" data-testid={NAV.home} className={linkBase}>Início</NavLink>
+            <NavLink to="/veiculos" data-testid={NAV.veiculos} className={linkBase}>Veículos</NavLink>
+            <NavLink to="/revendedores" data-testid={NAV.revendedores} className={linkBase}>Revendedores</NavLink>
+            <NavLink to="/planos" data-testid={NAV.planos} className={linkBase}>Anuncie</NavLink>
+            {user ? (
+              <div className="flex items-center gap-4" data-testid={NAV.userMenu}>
+                {user.role === "admin" ? (
+                  <Link to="/admin" data-testid={NAV.admin} className={linkBase}>ADM</Link>
+                ) : (
+                  <Link to="/painel" data-testid={NAV.painel} className={linkBase}>Painel</Link>
+                )}
+                <button data-testid={NAV.logout} onClick={onLogout} className="text-sm font-bold uppercase tracking-tight border-b-2 border-black">Sair</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <Link to="/login" data-testid={NAV.login} className={linkBase}>Entrar</Link>
+                <Link to="/cadastro" data-testid={NAV.cadastro} className="bg-black text-white px-5 py-2.5 text-sm font-bold uppercase tracking-tight hover:bg-zinc-800 transition-colors">
+                  Anunciar
+                </Link>
+              </div>
+            )}
+          </nav>
+          <button className="md:hidden p-2" onClick={() => setOpen(!open)} aria-label="menu">
+            {open ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+        {open && (
+          <div className="md:hidden border-t border-zinc-200 bg-white">
+            <div className="px-4 py-4 flex flex-col gap-3">
+              <NavLink onClick={() => setOpen(false)} to="/" className={linkBase}>Início</NavLink>
+              <NavLink onClick={() => setOpen(false)} to="/veiculos" className={linkBase}>Veículos</NavLink>
+              <NavLink onClick={() => setOpen(false)} to="/revendedores" className={linkBase}>Revendedores</NavLink>
+              <NavLink onClick={() => setOpen(false)} to="/planos" className={linkBase}>Anuncie</NavLink>
+              {user ? (
+                <>
+                  {user.role === "admin" ? (
+                    <Link onClick={() => setOpen(false)} to="/admin" className={linkBase}>ADM</Link>
+                  ) : (
+                    <Link onClick={() => setOpen(false)} to="/painel" className={linkBase}>Painel</Link>
+                  )}
+                  <button onClick={() => { setOpen(false); onLogout(); }} className="text-left text-sm font-bold uppercase tracking-tight">Sair</button>
+                </>
+              ) : (
+                <>
+                  <Link onClick={() => setOpen(false)} to="/login" className={linkBase}>Entrar</Link>
+                  <Link onClick={() => setOpen(false)} to="/cadastro" className="bg-black text-white px-5 py-2.5 text-sm font-bold uppercase tracking-tight inline-block w-fit">Anunciar</Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+
+      <main className="flex-1">{children}</main>
+
+      <footer className="bg-black text-white mt-24">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-4 gap-10">
+          <div className="md:col-span-2">
+            <div className="font-black text-3xl tracking-tighter" style={{ fontFamily: "Cabinet Grotesk, Inter, sans-serif" }}>
+              STOCK<span className="text-[#FF3B30]">AUTO</span>
+            </div>
+            <p className="mt-4 text-zinc-400 max-w-md leading-relaxed">
+              O marketplace direto entre compradores e revendedores de veículos.
+              Anúncios verificados, contato via WhatsApp, sem burocracia.
+            </p>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-[0.2em] font-bold text-zinc-500 mb-4">Navegação</div>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/veiculos" className="hover:text-[#FF3B30]">Veículos</Link></li>
+              <li><Link to="/revendedores" className="hover:text-[#FF3B30]">Revendedores</Link></li>
+              <li><Link to="/planos" className="hover:text-[#FF3B30]">Anuncie</Link></li>
+            </ul>
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-[0.2em] font-bold text-zinc-500 mb-4">Acesso</div>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/login" className="hover:text-[#FF3B30] flex items-center gap-1">Entrar <ChevronRight size={14}/></Link></li>
+              <li><Link to="/cadastro" className="hover:text-[#FF3B30] flex items-center gap-1">Cadastrar Loja <ChevronRight size={14}/></Link></li>
+              <li><Link to="/login" data-testid="footer-admin-link" className="hover:text-[#FF3B30] flex items-center gap-1 text-zinc-500">Acesso ADM <ChevronRight size={14}/></Link></li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-zinc-900 py-6 text-center text-xs text-zinc-500">
+          © {new Date().getFullYear()} StockAuto — Todos os direitos reservados.
+        </div>
+      </footer>
+    </div>
+  );
+}
