@@ -45,17 +45,14 @@ StockAuto é um marketplace web responsivo de classificados de veículos focado 
 - 06/2026 — Backend FastAPI completo (auth, vehicles, dealers, admin, files, sitemap/robots)
 - 06/2026 — Componentes base: Layout, VehicleCard, WhatsAppButton, ProtectedRoute
 - 06/2026 — Página **Home** completa com hero, busca, categorias, veículos em destaque, revendedores, CTA
-- 06/2026 — `App.js` com BrowserRouter + AuthProvider + Layout + rotas; stubs `ComingSoon` para páginas em desenvolvimento
-- 06/2026 — Smoke test visual aprovado em preview
+- 06/2026 — Páginas públicas: Listagem (`Listing.jsx`), Detalhe do veículo (`VehicleDetail.jsx`), Lista de revendedores (`DealerList.jsx`), Perfil do revendedor (`DealerProfile.jsx`)
+- 06/2026 — `App.js` com BrowserRouter + AuthProvider + Layout + rotas
+- 06/2026 — Páginas de autenticação: `Login.jsx` (split brand panel + form) e `Register.jsx` (3 seções: plano → dados da loja → acesso, com aviso de fluxo PIX manual). Integração via `AuthContext` (cookie JWT). Verificado em smoke test com admin → redirect `/admin` → `/api/auth/me` 200.
 
 ## Backlog priorizado
 
 ### P0 — próximas entregas
-- `pages/Listing.jsx` — Listagem de veículos com filtros laterais (categoria, marca, ano, preço, UF, cidade, q)
-- `pages/VehicleDetail.jsx` — Página do anúncio com galeria, specs, CTA WhatsApp, sticky mobile CTA
-- `pages/DealerProfile.jsx` — Mini-site do revendedor com logo/cover, descrição, grid de estoque
-- `pages/Login.jsx` / `pages/Register.jsx` — fluxo de auth + tela PIX pós-cadastro
-- `pages/DealerPanel.jsx` — painel revendedor (anúncios, perfil, plano)
+- `pages/DealerPanel.jsx` — painel revendedor (anúncios, perfil, plano, status PIX pendente)
 - `pages/AdminPanel.jsx` — painel admin (aprovar revendedores, moderar anúncios, notificações, settings PIX)
 
 ### P1
