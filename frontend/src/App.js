@@ -3,6 +3,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
+import Listing from "@/pages/Listing";
+import VehicleDetail from "@/pages/VehicleDetail";
+import DealerList from "@/pages/DealerList";
+import DealerProfile from "@/pages/DealerProfile";
 import ComingSoon from "@/pages/ComingSoon";
 
 function App() {
@@ -13,10 +17,10 @@ function App() {
           <Layout>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/veiculos" element={<ComingSoon title="Listagem de veículos" />} />
-              <Route path="/veiculo/:slug" element={<ComingSoon title="Anúncio" />} />
-              <Route path="/revendedores" element={<ComingSoon title="Revendedores" />} />
-              <Route path="/revendedor/:slug" element={<ComingSoon title="Mini-site do revendedor" />} />
+              <Route path="/veiculos" element={<Listing />} />
+              <Route path="/veiculo/:slug" element={<VehicleDetail />} />
+              <Route path="/revendedores" element={<DealerList />} />
+              <Route path="/revendedor/:slug" element={<DealerProfile />} />
               <Route path="/planos" element={<ComingSoon title="Planos" />} />
               <Route path="/login" element={<ComingSoon title="Entrar" />} />
               <Route path="/cadastro" element={<ComingSoon title="Cadastrar loja" />} />
