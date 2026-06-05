@@ -1,0 +1,306 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { REGISTER } from "@/constants/testIds";
+import { ArrowRight, Check, Info } from "lucide-react";
+
+const UFS = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB",
+  "PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"
+];
+
+export default function Register() {
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
+  const [plans, setPlans] = useState([]);
+  const [form, setForm] = useState({
+    store_name: "",
+    email: "",
+    password: "",
+    password_confirm: "",
+    phone: "",
+    whatsapp: "",
+    city: "",
+    uf: "SP",
+    address: "",
+    description: "",
+    plan_code: "avulso",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api.get("/settings/public")
+      .then((r) => setPlans(r.data.plans || []))
+      .catch(() => setPlans([
+        { code: "avulso", name: "Avulso", ad_limit: 1, price: 0 },
+        { code: "loja", name: "Loja", ad_limit: 50, price: 129.9 },
+      ]));
+  }, []);
+
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const selectPlan = (code) => setForm({ ...form, plan_code: code });
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    if (form.password.length < 6) {
+      setError("A senha deve ter ao menos 6 caracteres.");
+      return;
+    }
+    if (form.password !== form.password_confirm) {
+      setError("As senhas não conferem.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { password_confirm, ...payload } = form;
+      await register(payload);
+      navigate("/painel", { replace: true });
+    } catch (err) {
+      setError(err?.response?.data?.detail || "Não foi possível concluir o cadastro.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputCls = "w-full border border-zinc-300 focus:border-black h-12 px-4 outline-none bg-transparent text-base transition-colors";
+
+  return (
+    <div className="bg-zinc-50 min-h-[calc(100vh-4rem)]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid lg:grid-cols-12 gap-10">
+          {/* Header column */}
+          <div className="lg:col-span-5">
+            <div className="lg:sticky lg:top-24">
+              <div className="text-xs uppercase tracking-[0.3em] font-bold text-zinc-500">
+                Cadastro de revendedor
+              </div>
+              <h1 className="mt-3 text-5xl lg:text-6xl font-black tracking-tighter leading-[0.95]"
+                  style={{ fontFamily: "Cabinet Grotesk, Inter, sans-serif" }}>
+                Cadastre <span className="text-[#FF3B30]">sua loja</span>.
+              </h1>
+              <p className="mt-6 text-zinc-600 leading-relaxed max-w-md">
+                Crie sua conta, escolha um plano e comece a anunciar.
+                Sem comissão, sem burocracia — contato direto via WhatsApp.
+              </p>
+
+              {/* PIX flow note */}
+              <div className="mt-10 bg-black text-white p-6">
+                <div className="flex gap-3">
+                  <Info size={20} className="flex-shrink-0 text-[#FF3B30] mt-0.5" />
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.25em] font-bold text-zinc-400 mb-2">
+                      Pagamento via Pix
+                    </div>
+                    <p className="text-sm text-zinc-300 leading-relaxed">
+                      Após o cadastro, sua conta ficará <span className="text-white font-bold">pendente de aprovação</span>.
+                      No painel você verá a chave Pix para pagamento. Assim que confirmarmos,
+                      seu plano é ativado manualmente por nossa equipe.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <ul className="mt-8 space-y-3 text-sm text-zinc-700">
+                {[
+                  "Mini site exclusivo da sua loja",
+                  "Botão WhatsApp em destaque",
+                  "Suporte e moderação humana",
+                ].map((b) => (
+                  <li key={b} className="flex items-center gap-2">
+                    <Check size={16} className="text-[#FF3B30]" /> {b}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Form column */}
+          <div className="lg:col-span-7">
+            <form onSubmit={onSubmit} className="bg-white border border-zinc-200 p-6 sm:p-10 space-y-8">
+              {/* Plan picker */}
+              <section>
+                <div className="text-xs uppercase tracking-[0.25em] font-bold text-zinc-500 mb-4">
+                  1. Escolha seu plano
+                </div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {plans.map((p) => {
+                    const active = form.plan_code === p.code;
+                    return (
+                      <button
+                        type="button"
+                        key={p.code}
+                        data-testid={`register-plan-${p.code}`}
+                        onClick={() => selectPlan(p.code)}
+                        className={`text-left border p-5 transition-all ${active ? "border-black bg-black text-white" : "border-zinc-300 hover:border-black"}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="text-lg font-black tracking-tighter" style={{ fontFamily: "Cabinet Grotesk" }}>
+                            {p.name}
+                          </div>
+                          {active && <Check size={18} className="text-[#FF3B30]" />}
+                        </div>
+                        <div className="mt-2 text-xs uppercase tracking-widest opacity-70">
+                          {p.ad_limit === 1 ? "1 anúncio" : `Até ${p.ad_limit} anúncios`}
+                        </div>
+                        <div className="mt-3 text-2xl font-black tracking-tighter" style={{ fontFamily: "Cabinet Grotesk" }}>
+                          {p.price > 0 ? `R$ ${p.price.toFixed(2).replace(".", ",")}` : "Grátis"}
+                          {p.price > 0 && <span className="text-xs font-normal opacity-70 ml-1">/mês</span>}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Store data */}
+              <section>
+                <div className="text-xs uppercase tracking-[0.25em] font-bold text-zinc-500 mb-4">
+                  2. Dados da loja
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">Nome da loja</label>
+                    <input
+                      data-testid={REGISTER.nameInput}
+                      required value={form.store_name} onChange={set("store_name")}
+                      placeholder="Ex: AutoStock Motors"
+                      className={`mt-2 ${inputCls}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">Telefone</label>
+                    <input
+                      data-testid="register-phone-input"
+                      required value={form.phone} onChange={set("phone")}
+                      placeholder="(11) 0000-0000"
+                      className={`mt-2 ${inputCls}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">WhatsApp</label>
+                    <input
+                      data-testid="register-whatsapp-input"
+                      required value={form.whatsapp} onChange={set("whatsapp")}
+                      placeholder="(11) 99999-0000"
+                      className={`mt-2 ${inputCls}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">Cidade</label>
+                    <input
+                      data-testid="register-city-input"
+                      required value={form.city} onChange={set("city")}
+                      placeholder="São Paulo"
+                      className={`mt-2 ${inputCls}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">UF</label>
+                    <select
+                      data-testid="register-uf-input"
+                      required value={form.uf} onChange={set("uf")}
+                      className={`mt-2 ${inputCls}`}
+                    >
+                      {UFS.map((u) => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">Endereço <span className="text-zinc-400 normal-case font-normal">(opcional)</span></label>
+                    <input
+                      data-testid="register-address-input"
+                      value={form.address} onChange={set("address")}
+                      placeholder="Av. Brasil, 1000"
+                      className={`mt-2 ${inputCls}`}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">Descrição da loja <span className="text-zinc-400 normal-case font-normal">(opcional)</span></label>
+                    <textarea
+                      data-testid="register-description-input"
+                      value={form.description} onChange={set("description")}
+                      rows={3}
+                      placeholder="Conte rapidamente sobre sua loja, especialidades, anos de mercado…"
+                      className={`mt-2 border border-zinc-300 focus:border-black px-4 py-3 w-full outline-none bg-transparent text-base transition-colors`}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {/* Account */}
+              <section>
+                <div className="text-xs uppercase tracking-[0.25em] font-bold text-zinc-500 mb-4">
+                  3. Dados de acesso
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">E-mail</label>
+                    <input
+                      data-testid={REGISTER.emailInput}
+                      required type="email" autoComplete="email"
+                      value={form.email} onChange={set("email")}
+                      placeholder="voce@empresa.com"
+                      className={`mt-2 ${inputCls}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">Senha</label>
+                    <input
+                      data-testid={REGISTER.passwordInput}
+                      required type="password" autoComplete="new-password" minLength={6}
+                      value={form.password} onChange={set("password")}
+                      placeholder="Mínimo 6 caracteres"
+                      className={`mt-2 ${inputCls}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">Confirmar senha</label>
+                    <input
+                      data-testid={REGISTER.passwordConfirmInput}
+                      required type="password" autoComplete="new-password" minLength={6}
+                      value={form.password_confirm} onChange={set("password_confirm")}
+                      placeholder="Repita a senha"
+                      className={`mt-2 ${inputCls}`}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {error && (
+                <div data-testid="register-error" className="border-l-4 border-[#FF3B30] bg-red-50 text-red-700 text-sm px-4 py-3">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                <Link
+                  to="/login"
+                  data-testid={REGISTER.loginLink}
+                  className="text-sm text-zinc-600 hover:text-black"
+                >
+                  Já tem conta? <span className="font-bold uppercase tracking-tight border-b-2 border-black ml-1">Entrar</span>
+                </Link>
+                <button
+                  data-testid={REGISTER.submitButton}
+                  type="submit"
+                  disabled={loading}
+                  className="bg-[#FF3B30] hover:bg-[#E13128] disabled:opacity-60 text-white h-14 px-8 font-bold uppercase tracking-tight inline-flex items-center justify-center gap-2 transition-colors w-full sm:w-auto"
+                >
+                  {loading ? "Enviando…" : (<>Criar conta <ArrowRight size={18} /></>)}
+                </button>
+              </div>
+
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Ao criar sua conta você concorda com os termos de uso da plataforma StockAuto
+                e autoriza a moderação dos anúncios publicados.
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,129 @@
+{
+  "project_name": "StockAuto",
+  "theme": "Light",
+  "archetype": "4 (Swiss & High-Contrast)",
+  "emotional_tone": "Trustworthy, Authority, Modern, Automotive-Magazine, Fast",
+  "colors": {
+    "background": {
+      "primary": "#FFFFFF",
+      "secondary": "#F4F4F5",
+      "tertiary": "#E4E4E7"
+    },
+    "text": {
+      "primary": "#0A0A0A",
+      "secondary": "#52525B",
+      "inverse": "#FFFFFF"
+    },
+    "brand": {
+      "primary": "#0A0A0A",
+      "accent": "#FF3B30",
+      "whatsapp": "#25D366",
+      "whatsapp_hover": "#1DA851"
+    },
+    "border": {
+      "default": "#E4E4E7",
+      "hover": "#A1A1AA"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Cabinet Grotesk",
+      "body": "Satoshi",
+      "monospace": "JetBrains Mono"
+    },
+    "scale": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tighter font-black",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-bold",
+      "h3": "text-xl sm:text-2xl tracking-tight font-bold",
+      "h4": "text-lg sm:text-xl font-semibold",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm",
+      "label": "text-xs uppercase tracking-[0.2em] font-bold"
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "Generous Spacing, Asymmetry, Optical Alignment",
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "grids": {
+      "marketing": "grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-8 md:gap-12",
+      "dashboard": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6",
+      "vehicle_listing": "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+    },
+    "borders": {
+      "radius_general": "rounded-none",
+      "radius_buttons": "rounded-none",
+      "radius_cards": "rounded-none"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-black text-white hover:bg-zinc-800 transition-colors duration-200 font-bold tracking-tight px-6 py-3",
+      "whatsapp": "bg-[#25D366] text-white hover:bg-[#1DA851] transition-colors duration-200 font-bold tracking-tight px-6 py-3 flex items-center justify-center gap-2",
+      "accent": "bg-[#FF3B30] text-white hover:bg-[#D63026] transition-colors duration-200 font-bold tracking-tight px-6 py-3",
+      "outline": "bg-transparent border-2 border-black text-black hover:bg-black hover:text-white transition-colors duration-200 font-bold tracking-tight px-6 py-3"
+    },
+    "cards": {
+      "vehicle": "flex flex-col border border-zinc-200 bg-white group hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all duration-300",
+      "dealer": "p-6 border border-zinc-200 bg-zinc-50"
+    },
+    "inputs": {
+      "default": "border-b-2 border-zinc-200 bg-transparent px-0 py-2 focus:outline-none focus:border-black transition-colors rounded-none placeholder:text-zinc-400"
+    },
+    "glassmorphism": "bg-white/80 backdrop-blur-xl border border-white/20 shadow-sm"
+  },
+  "animations": {
+    "hover": "transition-all duration-300 ease-out",
+    "reveal": "staggered entrance animations for grid items (framer-motion)",
+    "image_hover": "group-hover:scale-105 transition-transform duration-700 ease-out"
+  },
+  "icons": {
+    "library": "@phosphor-icons/react",
+    "weight": "regular",
+    "size": {
+      "small": "16",
+      "medium": "24",
+      "large": "32"
+    }
+  },
+  "media": {
+    "hero_background": {
+      "url": "https://images.pexels.com/photos/17148730/pexels-photo-17148730.jpeg",
+      "description": "Black luxury car speeding on bridge with cityscape backdrop during twilight.",
+      "usage": "Home page hero section background with bg-black/40 overlay"
+    },
+    "dealer_cover": {
+      "url": "https://images.unsplash.com/photo-1760092856749-31c8d5d28746",
+      "description": "Modern mercedes-benz building with glass facade",
+      "usage": "Dealer profile mini-site default cover image"
+    },
+    "showroom": {
+      "url": "https://images.pexels.com/photos/18108314/pexels-photo-18108314.jpeg",
+      "description": "Sleek luxury cars showcased in a stylish, modern automotive dealership.",
+      "usage": "Featured dealers section or about us"
+    },
+    "truck_category": {
+      "url": "https://images.pexels.com/photos/9036180/pexels-photo-9036180.jpeg",
+      "description": "Front view of a white GMC truck parked on a scenic road with trees in the background.",
+      "usage": "Category placeholder for 'Camionete'"
+    },
+    "engine_specs": {
+      "url": "https://images.pexels.com/photos/37177077/pexels-photo-37177077.jpeg",
+      "description": "Detailed view of car engine parts",
+      "usage": "Vehicle detail page specs section background or feature image"
+    }
+  },
+  "accessibility": {
+    "contrast": "Ensure text over images has sufficient contrast or text-shadow. Minimum 4.5:1 for normal text.",
+    "focus": "focus:ring-2 focus:ring-black focus:outline-none",
+    "testing": "All interactive elements must have data-testid attributes."
+  },
+  "instructions_to_main_agent": [
+    "Use pure HTML/Tailwind for marketing/home/listing layouts to achieve the Swiss Brutalist/High-Contrast feel. Avoid Shadcn Card components for vehicles to prevent rigid look.",
+    "For forms, auth, and dealer dashboard, use Shadcn components but heavily customize them to remove borders where possible, or use sharp edges (rounded-none).",
+    "WhatsApp CTAs are the core conversion metric. They must be massive, highly visible, sticky on mobile detail pages, and use the exact #25D366 brand color.",
+    "Implement fluid typography for headings. Cabinet Grotesk should be used for all H1-H4. Satoshi for body.",
+    "Never use generic placeholders. Use the provided media URLs.",
+    "Ensure the price format is strictly Brazilian Real (e.g. R$ 39.900,00) and 'Consultar Valor' for empty.",
+    "Dealer mini-sites must feel premium. Use generous padding, large typography for their name, and a crisp clean grid for their inventory."
+  ]
+}
