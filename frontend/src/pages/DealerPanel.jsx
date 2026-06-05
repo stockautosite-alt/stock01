@@ -37,7 +37,7 @@ export default function DealerPanel() {
           </div>
         </div>
         <Link
-          to={`/loja/${user.slug}`}
+          to={`/revendedor/${user.slug}`}
           target="_blank"
           rel="noreferrer"
           className="self-start md:self-auto text-xs font-bold uppercase tracking-tight border-b-2 border-black hover:text-[#FF3B30] hover:border-[#FF3B30]"

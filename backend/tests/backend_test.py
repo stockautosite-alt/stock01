@@ -378,6 +378,124 @@ class TestAdmin:
 
 
 # ============================================================================
+# Admin - NEW endpoints (stats, vehicle status, seed Campo Grande)
+# ============================================================================
+class TestAdminNew:
+    def test_admin_stats(self, admin_session):
+        r = admin_session.get(f"{API}/admin/stats", timeout=30)
+        assert r.status_code == 200
+        d = r.json()
+        for k in ["dealers_total", "dealers_pending", "dealers_active",
+                  "vehicles_total", "vehicles_active", "vehicles_pending",
+                  "notifications_unread"]:
+            assert k in d, f"missing key {k}"
+            assert isinstance(d[k], int)
+
+    def test_admin_stats_requires_admin(self, client):
+        r = client.get(f"{API}/admin/stats", timeout=30)
+        assert r.status_code == 401
+
+    def test_admin_vehicle_status_full_cycle(self, admin_session, active_dealer_session):
+        s, _ = active_dealer_session
+        payload = {
+            "category": "carro", "brand": "TEST-Statuscycle", "model": "M",
+            "year_made": 2020, "year_model": 2021,
+            "city": "Goiânia", "uf": "GO", "price": 40000.0, "photos": [],
+        }
+        r = s.post(f"{API}/dealer/vehicles", json=payload, timeout=30)
+        assert r.status_code == 200
+        vid = r.json()["id"]
+
+        # while pending, NOT publicly accessible
+        rp = requests.get(f"{API}/vehicles/{vid}", timeout=30)
+        assert rp.status_code == 404, f"pending should be hidden: {rp.status_code}"
+
+        # approve via status endpoint
+        r = admin_session.put(f"{API}/admin/vehicles/{vid}/status", json={"status": "active"}, timeout=30)
+        assert r.status_code == 200
+        assert r.json()["status"] == "active"
+
+        # now visible publicly
+        rp = requests.get(f"{API}/vehicles/{vid}", timeout=30)
+        assert rp.status_code == 200
+        assert rp.json()["status"] == "active"
+
+        # block
+        r = admin_session.put(f"{API}/admin/vehicles/{vid}/status", json={"status": "blocked"}, timeout=30)
+        assert r.status_code == 200
+        assert r.json()["status"] == "blocked"
+
+        # blocked => 404 publicly
+        rp = requests.get(f"{API}/vehicles/{vid}", timeout=30)
+        assert rp.status_code == 404
+
+        # invalid status
+        r = admin_session.put(f"{API}/admin/vehicles/{vid}/status", json={"status": "weird"}, timeout=30)
+        assert r.status_code == 400
+
+        # 404 for unknown id
+        r = admin_session.put(f"{API}/admin/vehicles/nonexistent-id-xyz/status", json={"status": "active"}, timeout=30)
+        assert r.status_code == 404
+
+        # cleanup
+        admin_session.delete(f"{API}/admin/vehicles/{vid}", timeout=30)
+
+    def test_admin_vehicles_filter_by_status(self, admin_session):
+        r = admin_session.get(f"{API}/admin/vehicles?status=pending", timeout=30)
+        assert r.status_code == 200
+        data = r.json()
+        assert isinstance(data, list)
+        for v in data:
+            assert v["status"] == "pending"
+
+
+# ============================================================================
+# Seed Campo Grande
+# ============================================================================
+class TestSeedCampoGrande:
+    def test_campo_grande_vehicles_count(self, client):
+        r = client.get(f"{API}/vehicles?city=Campo%20Grande", timeout=30)
+        assert r.status_code == 200
+        items = r.json()["items"]
+        assert len(items) >= 6, f"expected >=6 Campo Grande vehicles, got {len(items)}"
+        for v in items:
+            assert "campo grande" in v["city"].lower()
+            assert v["uf"] == "MS"
+
+    def test_campo_grande_dealers(self, client):
+        r = client.get(f"{API}/dealers", timeout=30)
+        assert r.status_code == 200
+        dealers = r.json()
+        names = [d["store_name"].lower() for d in dealers]
+        # Two seeded Campo Grande dealers
+        assert any("bandeirantes" in n for n in names), f"Bandeirantes missing in {names}"
+        assert any("ms ve" in n or "ms veículos" in n or "ms veiculos" in n for n in names), \
+            f"MS Veículos missing in {names}"
+
+
+# ============================================================================
+# Public detail respects active-only
+# ============================================================================
+class TestPublicActiveOnly:
+    def test_pending_vehicle_404_public(self, admin_session, active_dealer_session):
+        s, _ = active_dealer_session
+        r = s.post(f"{API}/dealer/vehicles", json={
+            "category": "carro", "brand": "TEST-Hidden", "model": "P",
+            "year_made": 2019, "year_model": 2020, "city": "Goiânia", "uf": "GO",
+            "photos": [],
+        }, timeout=30)
+        assert r.status_code == 200
+        v = r.json()
+        assert v["status"] == "pending"
+        # public detail by id and by slug => 404
+        rp = requests.get(f"{API}/vehicles/{v['id']}", timeout=30)
+        assert rp.status_code == 404
+        rp = requests.get(f"{API}/vehicles/{v['slug']}", timeout=30)
+        assert rp.status_code == 404
+        admin_session.delete(f"{API}/admin/vehicles/{v['id']}", timeout=30)
+
+
+# ============================================================================
 # SEO
 # ============================================================================
 class TestSEO:

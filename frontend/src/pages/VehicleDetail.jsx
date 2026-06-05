@@ -25,7 +25,7 @@ export default function VehicleDetail() {
   // Set SEO title + meta description
   useEffect(() => {
     if (!v) return;
-    const title = `${v.brand} ${v.model} ${v.version || ""} ${v.year_made}/${v.year_model} - ${v.city}/${v.uf} | StockAuto`;
+    const title = `${v.brand} ${v.model} ${v.year_model} em ${v.city} - ${v.uf} | StockAuto`;
     document.title = title;
     const desc = `${v.brand} ${v.model} ${v.year_model} com ${km(v.km)} em ${v.city}/${v.uf}. ${brl(v.price)}. Fale direto no WhatsApp.`;
     let meta = document.querySelector('meta[name="description"]');
@@ -100,7 +100,7 @@ export default function VehicleDetail() {
             {photo ? (
               <img
                 src={fileUrl(photo)}
-                alt={`${title} ${v.year_model} ${v.city}`}
+                alt={`${title} ${v.year_model} em ${v.city} - ${v.uf}${dealer.store_name ? ` - Revenda ${dealer.store_name}` : ""}`}
                 className="w-full h-full object-cover"
               />
             ) : (

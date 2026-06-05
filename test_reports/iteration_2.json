@@ -1,0 +1,35 @@
+{
+  "summary": "Validated NEW Painel Admin + full MVP E2E (cadastro -> aprovação -> anúncio -> moderação -> publicação) on StockAuto. Backend: 39/39 pytest tests passed (added 7 new covering /api/admin/stats, /api/admin/vehicles/{vid}/status full cycle + invalid status + 404, /api/admin/vehicles?status= filter, seed Campo Grande 6 vehicles + 2 dealers, and public detail 404 for non-active). Frontend: registered new dealer via /cadastro (plano Loja) -> PIX screen (register-pix-screen) shown; logged as admin -> /admin Dashboard renders all 4 stats (Lojistas/pendentes/Anúncios ativos/pendentes) -> Revendedores tab shows pending row -> Aprovar moves to active -> dealer logs in -> /painel loads (no PendingApproval) -> Novo anúncio form fills -> price field formats to '85.000,00' (R$ rendered as prefix outside input, card shows 'R$ 85.000,00') -> submit creates vehicle as pending -> admin Moderação tab (Pendentes pill) shows it -> Aprovar -> vehicle becomes active and is visible at /veiculos. SEO: document.title on detail = 'Hyundai HB20 2022 em Campo Grande - MS | StockAuto' (format correct); footer shows 'Buscas populares em Campo Grande'.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "all public pages", "issues": ["AuthContext still triggers GET /api/auth/me on every page load for anonymous visitors -> 401 entries in browser console (functional impact: none). Carry-over from iteration_1."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Cache an in-memory 'no session' flag in AuthContext to stop spamming /api/auth/me with 401s for anonymous visitors."
+  ],
+  "critical_code_review_comments": [
+    "server.py is now 1036 lines (grew with /admin/stats, /admin/vehicles/{vid}/status and seed_campo_grande). Should be split into modules (routes/admin.py, routes/public.py, seed.py).",
+    "/api/admin/vehicles/{vid} (legacy PUT) and /api/admin/vehicles/{vid}/status are two ways to mutate status — prefer keeping a single source of truth; legacy endpoint also overwrites whole vehicle which is risky.",
+    "VehicleStatusIn does not validate against allowed set via Pydantic enum/Literal; runtime check works but Literal['active','pending','blocked','paused'] would auto-doc and 422 instead of manual 400.",
+    "/api/admin/stats has no caching; with growing data this hits 8 count_documents on every dashboard render — consider an aggregation pipeline ($facet) to do it in a single round-trip.",
+    "seed_campo_grande inserts unconditionally on startup if dealers are missing — fine, but plan/limit fields not enforced for these seeded ads; ensure plan_ad_limit logic ignores seed dealers or sets plan_code consistently."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py"
+  ],
+  "success_rate": {"backend": "100% (39/39)", "frontend": "100% on critical MVP flow + Admin Panel + SEO + footer"},
+  "test_credentials": "Admin: admin@stockauto.com / Admin@123. Active dealer seeds (Dealer@123): contato@bandeirantesmotors.com (note: seed uses vendas@bandeirantesmotors.com), contato@msveiculospremium.com. E2E created/deleted teste-dealer-{rand}@stockauto.com via admin DELETE.",
+  "seed_data_creation": "E2E created 1 dealer + 1 vehicle (Toyota Corolla TEST E2E) and deleted them at the end via /api/admin/users/{id} DELETE. Admin + seed data preserved.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression suite: pytest /app/backend/tests/backend_test.py -v (39 tests). New tests live in TestAdminNew, TestSeedCampoGrande, TestPublicActiveOnly classes. Public detail /api/vehicles/{slug_or_id} now returns ONLY status=active (404 for pending/blocked) — confirmed intentional and tested. Admin Panel testids per APANEL.* in /app/frontend/src/constants/testIds/stockauto.js. Login testids are LOGIN.* (login-email-input / login-password-input / login-submit-button). Cadastro form uses REGISTER.* (register-name-input, register-email-input, register-password-input, register-password-confirm-input, register-submit-button) plus per-field register-{phone,whatsapp,city,uf,address,description}-input and plan card register-plan-{avulso|loja}. Filter for moderation is FilterPills with text 'Pendentes/Ativos/Bloqueados/Pausados' under [data-testid=apanel-vehicle-status-filter]. Price input formats to '0.000,00' and R$ is rendered as a separate visible prefix (not part of input value) — card/detail show 'R$ 0.000,00' correctly.",
+  "rca of the issue": "No bugs found in this iteration."
+}

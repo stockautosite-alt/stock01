@@ -506,7 +506,7 @@ async def list_vehicles(
 
 @api.get("/vehicles/{slug_or_id}")
 async def get_vehicle(slug_or_id: str):
-    v = await db.vehicles.find_one({"$or": [{"slug": slug_or_id}, {"id": slug_or_id}], "status": {"$ne": "deleted"}}, {"_id": 0})
+    v = await db.vehicles.find_one({"$or": [{"slug": slug_or_id}, {"id": slug_or_id}], "status": "active"}, {"_id": 0})
     if not v:
         raise HTTPException(status_code=404, detail="Anúncio não encontrado")
     return await vehicle_with_dealer(v)
@@ -755,6 +755,35 @@ async def admin_update_settings(body: SettingsIn, user: dict = Depends(get_admin
     return await get_settings()
 
 
+@api.get("/admin/stats")
+async def admin_stats(user: dict = Depends(get_admin_user)):
+    return {
+        "dealers_total": await db.users.count_documents({"role": "dealer"}),
+        "dealers_pending": await db.users.count_documents({"role": "dealer", "status": "pending"}),
+        "dealers_active": await db.users.count_documents({"role": "dealer", "status": "active"}),
+        "dealers_blocked": await db.users.count_documents({"role": "dealer", "status": "blocked"}),
+        "vehicles_total": await db.vehicles.count_documents({"status": {"$ne": "deleted"}}),
+        "vehicles_active": await db.vehicles.count_documents({"status": "active"}),
+        "vehicles_pending": await db.vehicles.count_documents({"status": "pending"}),
+        "notifications_unread": await db.notifications.count_documents({"read": False}),
+    }
+
+
+class VehicleStatusIn(BaseModel):
+    status: str
+
+
+@api.put("/admin/vehicles/{vid}/status")
+async def admin_set_vehicle_status(vid: str, body: VehicleStatusIn, user: dict = Depends(get_admin_user)):
+    allowed = {"active", "pending", "blocked", "paused"}
+    if body.status not in allowed:
+        raise HTTPException(status_code=400, detail="Status inválido")
+    res = await db.vehicles.update_one({"id": vid}, {"$set": {"status": body.status, "updated_at": now_iso()}})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Anúncio não encontrado")
+    return await db.vehicles.find_one({"id": vid}, {"_id": 0})
+
+
 # ============================================================================
 # FILES (public read)
 # ============================================================================
@@ -922,6 +951,59 @@ async def seed_admin():
         await db.users.update_one({"email": ADMIN_EMAIL}, {"$set": {"password_hash": hash_password(ADMIN_PASSWORD)}})
 
 
+# ---------------------------------------------------------------------------
+# Campo Grande - MS seed (idempotent) — gives the marketplace real local
+# inventory so the local-SEO popular searches return results.
+# ---------------------------------------------------------------------------
+CG_DEALERS = [
+    {"email": "vendas@bandeirantesmotors.com", "store_name": "Bandeirantes Motors", "city": "Campo Grande", "uf": "MS", "phone": "(67) 3321-4500", "whatsapp": "5567999990001", "address": "Av. Bandeirantes, 1500 - Centro", "description": "Tradição em Campo Grande há mais de 15 anos. Seminovos revisados com procedência, na Avenida Bandeirantes."},
+    {"email": "contato@msveiculospremium.com", "store_name": "MS Veículos Premium", "city": "Campo Grande", "uf": "MS", "phone": "(67) 3025-7800", "whatsapp": "5567999990002", "address": "Av. Afonso Pena, 3000 - Jardim dos Estados", "description": "Os melhores carros e camionetes da capital sul-mato-grossense, com garantia e troca facilitada."},
+]
+
+CG_VEHICLES = [
+    {"category": "carro", "brand": "Toyota", "model": "Corolla Cross", "version": "XRE 2.0", "year_made": 2022, "year_model": 2023, "km": 28000, "transmission": "Automático", "fuel": "Flex", "color": "Branco", "price": 169900.00, "description": "SUV completo, único dono, revisões na concessionária de Campo Grande."},
+    {"category": "camionete", "brand": "Chevrolet", "model": "S10", "version": "LTZ 2.8 4x4", "year_made": 2021, "year_model": 2022, "km": 54000, "transmission": "Automático", "fuel": "Diesel", "color": "Prata", "price": 219900.00, "description": "Diesel 4x4, couro, multimídia. Pronta para o trabalho e a estrada."},
+    {"category": "moto", "brand": "Honda", "model": "CG 160", "version": "Titan", "year_made": 2023, "year_model": 2023, "km": 6000, "transmission": "Manual", "fuel": "Flex", "color": "Vermelho", "price": 16900.00, "description": "Seminova, econômica, ideal para o dia a dia em Campo Grande."},
+    {"category": "carro", "brand": "Volkswagen", "model": "Nivus", "version": "Highline 200 TSI", "year_made": 2022, "year_model": 2022, "km": 31000, "transmission": "Automático", "fuel": "Flex", "color": "Cinza", "price": 129900.00, "description": "SUV cupê, multimídia VW Play, garantia de fábrica."},
+    {"category": "camionete", "brand": "Fiat", "model": "Toro", "version": "Volcano 2.0 Diesel", "year_made": 2021, "year_model": 2021, "km": 62000, "transmission": "Automático", "fuel": "Diesel", "color": "Preto", "price": None, "description": "Diesel automática 4x4, aceita troca. Consulte condições."},
+    {"category": "carro", "brand": "Hyundai", "model": "HB20", "version": "Vision 1.0", "year_made": 2022, "year_model": 2022, "km": 24000, "transmission": "Manual", "fuel": "Flex", "color": "Branco", "price": 74900.00, "description": "Econômico, IPVA pago, revisado. Excelente custo-benefício."},
+]
+
+
+async def seed_campo_grande():
+    if await db.users.find_one({"email": CG_DEALERS[0]["email"]}):
+        logger.info("Seed: Campo Grande já existe, pulando.")
+        return
+    dealer_ids = []
+    for d in CG_DEALERS:
+        uid = str(uuid.uuid4())
+        slug = await unique_slug(db.users, slugify(f"{d['store_name']}-{d['city']}"))
+        await db.users.insert_one({
+            "id": uid, "email": d["email"], "password_hash": hash_password("Dealer@123"),
+            "role": "dealer", "status": "active", "store_name": d["store_name"], "slug": slug,
+            "phone": d["phone"], "whatsapp": d["whatsapp"], "city": d["city"], "uf": d["uf"],
+            "address": d["address"], "description": d["description"], "logo_path": None, "cover_path": None,
+            "plan_code": "loja", "plan_name": "Loja", "plan_ad_limit": 30, "plan_price": 129.90,
+            "payment_provider": "pix", "payment_status": "paid", "stripe_customer_id": None,
+            "stripe_subscription_id": None, "created_at": now_iso(),
+        })
+        dealer_ids.append(uid)
+    for idx, vraw in enumerate(CG_VEHICLES):
+        dealer_id = dealer_ids[idx % len(dealer_ids)]
+        photos = SEED_PHOTOS.get(vraw["category"], SEED_PHOTOS["carro"])
+        v = dict(vraw)
+        v["city"], v["uf"] = "Campo Grande", "MS"
+        v.update({
+            "id": str(uuid.uuid4()),
+            "slug": await unique_slug(db.vehicles, vehicle_slug_base(v)),
+            "dealer_id": dealer_id, "status": "active",
+            "photos": photos[: 3 + (idx % 3)], "main_photo": photos[0],
+            "created_at": now_iso(), "updated_at": now_iso(),
+        })
+        await db.vehicles.insert_one(v)
+    logger.info("Seed: Campo Grande — 2 revendedores e 6 anúncios criados")
+
+
 @app.on_event("startup")
 async def on_startup():
     await db.users.create_index("email", unique=True)
@@ -932,6 +1014,7 @@ async def on_startup():
     init_storage()
     await seed_admin()
     await seed_demo()
+    await seed_campo_grande()
     await get_settings()
 
 

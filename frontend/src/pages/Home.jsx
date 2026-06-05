@@ -26,6 +26,7 @@ export default function Home() {
   const [dealers, setDealers] = useState([]);
 
   useEffect(() => {
+    document.title = "StockAuto — As melhores ofertas de Campo Grande, MS";
     api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
     api.get("/vehicles?limit=8").then((r) => setVehicles(r.data.items || [])).catch(() => {});
     api.get("/dealers?limit=6").then((r) => setDealers(r.data || [])).catch(() => {});
@@ -49,7 +50,7 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 grid md:grid-cols-12 gap-10 items-end">
           <div className="md:col-span-7">
             <div className="text-xs font-bold uppercase tracking-[0.3em] text-zinc-400 mb-6">
-              Marketplace de veículos · Brasil
+              Campo Grande · MS · Marketplace de veículos
             </div>
             <h1 className="font-black tracking-tighter leading-[0.95] text-5xl sm:text-6xl lg:text-7xl"
                 style={{ fontFamily: "Cabinet Grotesk, Inter, sans-serif" }}>
@@ -57,8 +58,9 @@ export default function Home() {
               do revendedor.
             </h1>
             <p className="mt-8 text-lg text-zinc-300 max-w-xl leading-relaxed">
-              Sem intermediação. Sem ruído. Chame no WhatsApp e fecha negócio.
-              Carros, motos, caminhões, náuticos e mais.
+              As melhores ofertas de Campo Grande, MS em um só lugar. Sem intermediação:
+              chame no WhatsApp e feche negócio direto com a revenda. Carros, motos,
+              camionetes e mais.
             </p>
             <form onSubmit={onSearch} className="mt-10 flex flex-col sm:flex-row gap-3 max-w-xl">
               <div className="flex-1 flex items-center bg-white text-black px-5 h-14">

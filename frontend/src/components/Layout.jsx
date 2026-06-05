@@ -110,6 +110,19 @@ export default function Layout({ children }) {
             </ul>
           </div>
         </div>
+        <div className="border-t border-zinc-900">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-xs uppercase tracking-[0.2em] font-bold text-zinc-500 mb-4">
+              Buscas populares em Campo Grande
+            </div>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              <Link to="/veiculos?category=carro&city=Campo Grande" className="text-zinc-400 hover:text-[#FF3B30]">Carros usados em CG</Link>
+              <Link to="/veiculos?category=camionete&city=Campo Grande" className="text-zinc-400 hover:text-[#FF3B30]">Camionetes em Campo Grande</Link>
+              <Link to="/veiculos?category=moto&uf=MS" className="text-zinc-400 hover:text-[#FF3B30]">Motos seminovas em MS</Link>
+              <Link to="/revendedores" className="text-zinc-400 hover:text-[#FF3B30]">Revendas na Avenida Bandeirantes</Link>
+            </div>
+          </div>
+        </div>
         <div className="border-t border-zinc-900 py-6 text-center text-xs text-zinc-500">
           © {new Date().getFullYear()} StockAuto — Todos os direitos reservados.
         </div>

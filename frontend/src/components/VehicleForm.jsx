@@ -178,8 +178,8 @@ export default function VehicleForm({ initial, onClose, onSaved }) {
                 {UF_LIST.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
               </select>
             </Field>
-            <Field label="Preço (R$) — vazio = Consultar">
-              <Input testid={DPANEL.vehicleFormPrice} type="number" step="0.01" value={data.price ?? ""} onChange={(v) => set("price", v)} />
+            <Field label="Preço — vazio = Consultar Valor">
+              <CurrencyInput testid={DPANEL.vehicleFormPrice} value={data.price} onChange={(v) => set("price", v)} />
             </Field>
           </div>
 
@@ -241,5 +241,36 @@ function Input({ testid, value, onChange, type = "text", required = false, step 
       onChange={(e) => onChange(e.target.value)}
       className="w-full h-12 px-4 border border-zinc-300 focus:border-black outline-none bg-white"
     />
+  );
+}
+
+// BRL currency input with R$ 0.000,00 mask. Stores a numeric value (or "" => Consultar Valor).
+function CurrencyInput({ testid, value, onChange }) {
+  const display =
+    value === "" || value === null || value === undefined
+      ? ""
+      : Number(value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const handle = (e) => {
+    const onlyDigits = e.target.value.replace(/\D+/g, "");
+    if (!onlyDigits) {
+      onChange("");
+      return;
+    }
+    onChange(Number(onlyDigits) / 100);
+  };
+
+  return (
+    <div className="flex items-center h-12 border border-zinc-300 focus-within:border-black bg-white">
+      <span className="px-3 text-zinc-500 font-bold select-none">R$</span>
+      <input
+        data-testid={testid}
+        inputMode="numeric"
+        value={display}
+        onChange={handle}
+        placeholder="0,00 (vazio = Consultar Valor)"
+        className="flex-1 h-full pr-4 outline-none bg-transparent"
+      />
+    </div>
   );
 }

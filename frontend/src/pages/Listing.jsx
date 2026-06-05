@@ -23,6 +23,7 @@ export default function Listing() {
 
   // Load categories once
   useEffect(() => {
+    document.title = "Veículos à venda em Campo Grande - MS | StockAuto";
     api.get("/categories").then((r) => setCategories(r.data)).catch(() => {});
   }, []);
 
@@ -294,6 +295,17 @@ export default function Listing() {
           )}
         </section>
       </div>
+
+      <section className="bg-zinc-50 border-t border-zinc-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <h2 className="text-xs uppercase tracking-[0.3em] font-bold text-zinc-500">Sobre o catálogo</h2>
+          <p className="mt-3 text-sm text-zinc-600 max-w-3xl leading-relaxed">
+            Encontre as melhores ofertas de veículos em Campo Grande, MS. O StockAuto conecta
+            você diretamente às revendas mais confiáveis da capital — sem intermediação, com
+            contato direto via WhatsApp.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

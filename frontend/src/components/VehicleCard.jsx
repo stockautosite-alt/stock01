@@ -16,7 +16,7 @@ export default function VehicleCard({ v, testIdBuilder }) {
         {img ? (
           <img
             src={img}
-            alt={`${v.brand} ${v.model} ${v.year_model} ${v.city}`}
+            alt={`${v.brand} ${v.model} ${v.year_model} em ${v.city} - ${v.uf}${v.dealer?.store_name ? ` - Revenda ${v.dealer.store_name}` : ""}`}
             loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           />
