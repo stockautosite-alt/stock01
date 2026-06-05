@@ -1,0 +1,45 @@
+{
+  "summary": "Full E2E backend + frontend validation of StockAuto after GitHub import. Backend: 32/32 pytest tests passed covering public endpoints (categories, settings, vehicles list/detail with filters, dealers list/detail), auth (admin login + cookies, /me, logout, dealer register with pending status, duplicate email), dealer CRUD (profile update, create/edit/soft-delete vehicle, plan-limit enforcement implicit), admin moderation (users list, activate dealer, vehicles list, approve vehicle, notifications, settings get/update with PIX) and SEO (robots.txt, sitemap.xml). Frontend: home, /veiculos (12 cards + filters), vehicle detail (gallery + WhatsApp CTA), /revendedores (3 seed dealers), dealer profile, /login (admin login sets HttpOnly cookies, redirects to /admin showing ComingSoon as expected, header switches to ADM/SAIR, /api/auth/me=200), /cadastro (3 sections rendered). No critical bugs found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "all pages", "issues": ["Document <title> is the default 'Emergent | Fullstack App' instead of 'StockAuto' — bad for SEO/branding (update public/index.html and/or use react-helmet per route)."]},
+      {"screen": "any public page (Home/Listing/Detail/Dealers)", "issues": ["AuthContext fires GET /api/auth/me on every page load for unauthenticated visitors, producing 15+ noisy 401 entries in the browser console. Functional impact: none, but it clutters DevTools and shows up to monitoring. Suggestion: cache a 'no session' flag in memory or 401-swallow silently."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional, low priority) Set proper <title> in /app/frontend/public/index.html to 'StockAuto — Marketplace de Veículos' and add per-page titles.",
+    "(Optional, low priority) Silence /api/auth/me 401 noise for unauthenticated visitors in AuthContext."
+  ],
+  "critical_code_review_comments": [
+    "server.py is 953 lines and mixes models, routes (auth/public/dealer/admin), storage helpers and seed in one file — should be split into modules (models.py, deps.py, routes/auth.py, routes/dealer.py, routes/admin.py, storage.py, seed.py) for maintainability.",
+    "set_auth_cookies uses samesite='none' with secure=True — correct for cross-site cookies behind ingress, but the comment 'access 24h' in create_token contradicts the spec note of '15min access'. Token actually lives 24h; either fix the spec or shorten the lifetime + add a /auth/refresh endpoint (currently absent — refresh_token cookie is set but never consumed).",
+    "No POST /api/auth/refresh endpoint exists despite refresh_token cookie being issued; once the access_token expires the user is forced to re-login.",
+    "list_dealers passes `featured` argument but never uses it; same for `featured` in list_vehicles. Either implement or remove from the signature.",
+    "admin_delete_user permanently deletes the user document but only soft-deletes their vehicles — orphan references remain in vehicle.dealer_id with no user to resolve in vehicle_with_dealer (dealer becomes null). Either soft-delete users too or cascade hard-delete.",
+    "dealer_create_vehicle counts active+pending against plan_ad_limit, but soft-deleted ones are correctly excluded — OK. However editing a vehicle resets status to 'pending' unconditionally; small UX problem if admin edits something they already approved.",
+    "Public route `/api/vehicles/{slug_or_id}` returns vehicles with status != 'deleted' — that means a 'pending' or 'blocked' ad is publicly viewable by direct slug. Should restrict to status='active' for unauthenticated requests.",
+    "No rate limiting on /auth/login, /auth/register — brute-force vulnerable.",
+    "EmailStr + bcrypt are fine, but password policy is only min_length=6 — weak.",
+    "robots.txt and sitemap.xml are mounted under /api which is non-standard; usually they sit at site root. Search engines won't find /api/robots.txt; frontend should proxy /robots.txt -> /api/robots.txt or backend should expose them at the root path."
+  ],
+  "updated_files": [
+    "/app/backend/tests/__init__.py",
+    "/app/backend/tests/backend_test.py"
+  ],
+  "success_rate": {"backend": "100% (32/32)", "frontend": "100% on all flows covered (Home, Listing, Detail, Dealers, Dealer Profile, Login+redirect+session, Register render)"},
+  "test_credentials": "admin@stockauto.com / Admin@123 (seeded). Dealer seed accounts: contato@autocentersilva.com, vendas@premiummotors.com, atendimento@garagemnacional.com — password Dealer@123. New dealers registered via /api/auth/register start status='pending' and need admin activation (PUT /api/admin/users/{id} {status:'active'}).",
+  "seed_data_creation": "Test created one TEST_dealer_* (registered then activated then deleted in teardown); test vehicles created/deleted within the test run. Admin and seed data preserved.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression suite is at /app/backend/tests/backend_test.py — covers 32 cases. Run: pytest backend/tests/backend_test.py -v. Frontend routes /painel and /admin intentionally show ComingSoon — not a bug. WhatsApp CTAs are rendered on vehicle detail and dealer profile and use real numbers from seed dealers. Auth uses HttpOnly cookies, samesite=none; cross-origin works through ingress. EMERGENT_LLM_KEY is set in backend/.env so storage init succeeds (logs show 'Object storage initialized')."
+}
