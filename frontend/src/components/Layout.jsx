@@ -20,11 +20,8 @@ export default function Layout({ children }) {
     <div className="min-h-screen flex flex-col bg-white text-black" style={{ fontFamily: "Satoshi, Inter, system-ui, sans-serif" }}>
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-zinc-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" data-testid={NAV.logo} className="flex items-center gap-2">
-            <span className="inline-block w-7 h-7 bg-black" />
-            <span className="font-black tracking-tighter text-xl" style={{ fontFamily: "Cabinet Grotesk, Inter, sans-serif" }}>
-              STOCK<span className="text-[#FF3B30]">AUTO</span>
-            </span>
+          <Link to="/" data-testid={NAV.logo} className="flex items-center">
+            <img src="/logo-stockauto-light.png" alt="StockAuto — Campo Grande, MS" className="h-10 w-auto" />
           </Link>
           <nav className="hidden md:flex items-center gap-8">
             <NavLink to="/" data-testid={NAV.home} className={linkBase}>Início</NavLink>
@@ -85,12 +82,10 @@ export default function Layout({ children }) {
       <footer className="bg-black text-white mt-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="md:col-span-2">
-            <div className="font-black text-3xl tracking-tighter" style={{ fontFamily: "Cabinet Grotesk, Inter, sans-serif" }}>
-              STOCK<span className="text-[#FF3B30]">AUTO</span>
-            </div>
-            <p className="mt-4 text-zinc-400 max-w-md leading-relaxed">
-              O marketplace direto entre compradores e revendedores de veículos.
-              Anúncios verificados, contato via WhatsApp, sem burocracia.
+            <img src="/logo-stockauto-dark.png" alt="StockAuto" className="h-14 w-auto" />
+            <p className="mt-5 text-zinc-400 max-w-md leading-relaxed">
+              O marketplace direto entre compradores e revendedores de veículos
+              em Campo Grande, MS. Anúncios verificados, contato via WhatsApp, sem burocracia.
             </p>
           </div>
           <div>
