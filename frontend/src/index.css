@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* White-label: hide external platform branding/badges */
+#emergent-badge,
+a#emergent-badge,
+a[href*="emergent.sh"],
+[id*="emergent-badge"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+
 body {
     margin: 0;
     font-family:
