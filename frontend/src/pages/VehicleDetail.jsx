@@ -180,7 +180,7 @@ export default function VehicleDetail() {
           </div>
 
           {dealer.whatsapp && (
-            <div className="mt-6 hidden md:block">
+            <div className="mt-6">
               <WhatsAppButton
                 whatsapp={dealer.whatsapp}
                 message={waMessage}
@@ -195,7 +195,7 @@ export default function VehicleDetail() {
             <a
               href={`tel:${digits(dealer.phone)}`}
               data-testid={DETAIL.callDealer}
-              className="mt-2 hidden md:inline-flex w-full items-center justify-center gap-2 border border-zinc-300 px-6 py-4 text-sm font-bold uppercase tracking-tight hover:border-black"
+              className="mt-2 inline-flex w-full items-center justify-center gap-2 border border-zinc-300 px-6 py-4 text-sm font-bold uppercase tracking-tight hover:border-black"
             >
               <Phone size={16} /> {dealer.phone}
             </a>
