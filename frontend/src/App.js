@@ -1,5 +1,6 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
@@ -14,11 +15,20 @@ import DealerPanel from "@/pages/DealerPanel";
 import AdminPanel from "@/pages/AdminPanel";
 import ComingSoon from "@/pages/ComingSoon";
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
         <AuthProvider>
+          <ScrollToTop />
           <Layout>
             <Routes>
               <Route path="/" element={<Home />} />
