@@ -3,10 +3,10 @@ import { useSearchParams } from "react-router-dom";
 import api from "@/lib/api";
 import VehicleCard from "@/components/VehicleCard";
 import { LISTING } from "@/constants/testIds";
-import { UF_LIST } from "@/lib/format";
+import { UF_STATES } from "@/lib/format";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
-const FIELDS = ["q", "category", "brand", "model", "city", "uf", "year_min", "year_max", "price_min", "price_max"];
+const FIELDS = ["q", "category", "brand", "model", "city", "uf", "year_min", "year_max", "price_min", "price_max", "transmission", "fuel"];
 
 function emptyForm(sp) {
   return FIELDS.reduce((acc, k) => ({ ...acc, [k]: sp.get(k) || "" }), {});
@@ -172,10 +172,10 @@ export default function Listing() {
                   onChange={onChange("uf")}
                   className="w-full border border-zinc-300 h-11 px-2 text-sm bg-white focus:border-black outline-none"
                 >
-                  <option value="">Todas</option>
-                  {UF_LIST.map((u) => (
-                    <option key={u} value={u}>
-                      {u}
+                  <option value="">Todos os estados</option>
+                  {UF_STATES.map((u) => (
+                    <option key={u.code} value={u.code}>
+                      {u.code} - {u.name}
                     </option>
                   ))}
                 </select>
@@ -234,6 +234,40 @@ export default function Listing() {
                   placeholder="R$"
                   className="w-full border border-zinc-300 h-11 px-3 text-sm focus:border-black outline-none"
                 />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Câmbio">
+                <select
+                  data-testid="listing-filter-transmission"
+                  value={form.transmission}
+                  onChange={onChange("transmission")}
+                  className="w-full border border-zinc-300 h-11 px-2 text-sm bg-white focus:border-black outline-none"
+                >
+                  <option value="">Todos</option>
+                  <option value="manual">Manual</option>
+                  <option value="automatico">Automático</option>
+                  <option value="automatizado">Automatizado</option>
+                  <option value="cvt">CVT</option>
+                </select>
+              </Field>
+              <Field label="Combustível">
+                <select
+                  data-testid="listing-filter-fuel"
+                  value={form.fuel}
+                  onChange={onChange("fuel")}
+                  className="w-full border border-zinc-300 h-11 px-2 text-sm bg-white focus:border-black outline-none"
+                >
+                  <option value="">Todos</option>
+                  <option value="flex">Flex</option>
+                  <option value="gasolina">Gasolina</option>
+                  <option value="alcool">Álcool</option>
+                  <option value="diesel">Diesel</option>
+                  <option value="gnv">GNV</option>
+                  <option value="eletrico">Elétrico</option>
+                  <option value="hibrido">Híbrido</option>
+                </select>
               </Field>
             </div>
 

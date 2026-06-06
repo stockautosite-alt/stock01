@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import api, { fileUrl } from "@/lib/api";
 import PanelLayout from "@/components/PanelLayout";
 import { APANEL } from "@/constants/testIds";
-import { brl, km, UF_LIST } from "@/lib/format";
+import { brl, km, UF_STATES } from "@/lib/format";
 import {
   LayoutDashboard, Users, Car, Bell, Settings as SettingsIcon,
   Check, X, Trash2, Store, Clock, CheckCircle2, RefreshCw, ArrowRight, Image as ImageIcon,
+  Pencil, Eye, EyeOff,
 } from "lucide-react";
 
 const TABS = [
@@ -113,6 +114,7 @@ function DealersTab({ onChanged }) {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [editing, setEditing] = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -190,6 +192,10 @@ function DealersTab({ onChanged }) {
                       <RefreshCw size={14} /> Reativar
                     </button>
                   )}
+                  <button data-testid={`apanel-dealer-edit-${d.id}`} onClick={() => setEditing(d)}
+                    className="p-2.5 border border-zinc-300 hover:border-black" aria-label="Editar">
+                    <Pencil size={16} />
+                  </button>
                   <button data-testid={APANEL.dealerDelete(d.id)} onClick={() => setConfirmDelete(d)}
                     className="p-2.5 border border-zinc-300 hover:border-[#FF3B30] hover:text-[#FF3B30]" aria-label="Excluir">
                     <Trash2 size={16} />
@@ -207,6 +213,14 @@ function DealersTab({ onChanged }) {
           body={`Remover "${confirmDelete.store_name}"? Todos os anúncios desta loja serão removidos. Esta ação não pode ser desfeita.`}
           onCancel={() => setConfirmDelete(null)}
           onConfirm={() => remove(confirmDelete.id)}
+        />
+      )}
+
+      {editing && (
+        <EditUserModal
+          user={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); load(); onChanged?.(); }}
         />
       )}
     </div>
@@ -466,6 +480,123 @@ function ConfirmModal({ title, body, onCancel, onConfirm }) {
           <button onClick={onCancel} className="flex-1 h-11 border border-zinc-300 font-bold uppercase tracking-tight text-sm">Cancelar</button>
           <button onClick={onConfirm} className="flex-1 h-11 bg-[#FF3B30] hover:bg-[#E13128] text-white font-bold uppercase tracking-tight text-sm">Excluir</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+
+function EInput({ testid, value, onChange, type = "text" }) {
+  return (
+    <input
+      data-testid={testid}
+      type={type}
+      value={value ?? ""}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full h-12 px-4 border border-zinc-300 focus:border-black outline-none bg-white"
+    />
+  );
+}
+
+function EditUserModal({ user, onClose, onSaved }) {
+  const [plans, setPlans] = useState([]);
+  const [form, setForm] = useState({
+    store_name: user.store_name || "",
+    email: user.email || "",
+    phone: user.phone || "",
+    whatsapp: user.whatsapp || "",
+    city: user.city || "",
+    uf: user.uf || "",
+    address: user.address || "",
+    description: user.description || "",
+    plan_code: user.plan_code || "avulso",
+  });
+  const [password, setPassword] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api.get("/settings/public").then(({ data }) => setPlans(data.plans || [])).catch(() => {});
+  }, []);
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const save = async (e) => {
+    e.preventDefault();
+    setSaving(true); setError("");
+    try {
+      const payload = { ...form };
+      if (password) payload.password = password;
+      await api.put(`/admin/users/${user.id}`, payload);
+      onSaved?.();
+    } catch (err) {
+      setError(err?.response?.data?.detail || "Erro ao salvar.");
+      setSaving(false);
+    }
+  };
+
+  const planOptions = plans.length ? plans : [{ code: "avulso", name: "Avulso" }, { code: "loja", name: "Loja" }];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-start justify-center overflow-y-auto py-8 px-4">
+      <div className="bg-white max-w-2xl w-full" data-testid="apanel-edit-user-modal">
+        <div className="sticky top-0 bg-white border-b border-zinc-200 px-6 py-4 flex items-center justify-between z-10">
+          <div>
+            <div className="text-xs uppercase tracking-[0.2em] font-bold text-zinc-500">Editar revendedor</div>
+            <div className="text-2xl font-black tracking-tighter" style={{ fontFamily: "Cabinet Grotesk" }}>{user.store_name}</div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-100" aria-label="Fechar"><X size={20} /></button>
+        </div>
+
+        <form onSubmit={save} className="p-6 space-y-5">
+          {error && <div className="border-l-4 border-[#FF3B30] bg-red-50 text-red-700 text-sm px-4 py-2">{error}</div>}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Nome da loja"><EInput value={form.store_name} onChange={(v) => set("store_name", v)} /></Field>
+            <Field label="E-mail (login)"><EInput testid="apanel-edit-email" type="email" value={form.email} onChange={(v) => set("email", v)} /></Field>
+            <Field label="Telefone"><EInput value={form.phone} onChange={(v) => set("phone", v)} /></Field>
+            <Field label="WhatsApp"><EInput value={form.whatsapp} onChange={(v) => set("whatsapp", v)} /></Field>
+            <Field label="Cidade"><EInput value={form.city} onChange={(v) => set("city", v)} /></Field>
+            <Field label="UF">
+              <select value={form.uf} onChange={(e) => set("uf", e.target.value)} className="w-full h-12 px-4 border border-zinc-300 focus:border-black outline-none bg-white">
+                <option value="">—</option>
+                {UF_STATES.map((u) => <option key={u.code} value={u.code}>{u.code} - {u.name}</option>)}
+              </select>
+            </Field>
+            <Field label="Plano">
+              <select data-testid="apanel-edit-plan" value={form.plan_code} onChange={(e) => set("plan_code", e.target.value)} className="w-full h-12 px-4 border border-zinc-300 focus:border-black outline-none bg-white">
+                {planOptions.map((p) => <option key={p.code} value={p.code}>{p.name}</option>)}
+              </select>
+            </Field>
+            <Field label="Redefinir senha (opcional)">
+              <div className="relative">
+                <input
+                  data-testid="apanel-edit-password"
+                  type={showPwd ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Deixe vazio para manter"
+                  className="w-full h-12 px-4 pr-12 border border-zinc-300 focus:border-black outline-none bg-white"
+                />
+                <button type="button" onClick={() => setShowPwd((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-black" aria-label="Mostrar senha">
+                  {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </Field>
+            <div className="sm:col-span-2">
+              <Field label="Endereço"><EInput value={form.address} onChange={(v) => set("address", v)} /></Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field label="Descrição">
+                <textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={3} className="w-full px-4 py-3 border border-zinc-300 focus:border-black outline-none" />
+              </Field>
+            </div>
+          </div>
+          <div className="flex gap-3 pt-2 border-t border-zinc-200">
+            <button type="button" onClick={onClose} className="flex-1 h-12 border border-zinc-300 hover:border-black font-bold uppercase tracking-tight">Cancelar</button>
+            <button type="submit" data-testid="apanel-edit-submit" disabled={saving} className="flex-1 h-12 bg-black hover:bg-zinc-800 disabled:opacity-60 text-white font-bold uppercase tracking-tight">{saving ? "Salvando…" : "Salvar"}</button>
+          </div>
+        </form>
       </div>
     </div>
   );

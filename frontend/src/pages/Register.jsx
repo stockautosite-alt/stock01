@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { REGISTER } from "@/constants/testIds";
-import { ArrowRight, Check, Info } from "lucide-react";
+import { ArrowRight, Check, Info, Eye, EyeOff } from "lucide-react";
 
 const UFS = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB",
@@ -30,6 +30,8 @@ export default function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [showPwd2, setShowPwd2] = useState(false);
 
   useEffect(() => {
     api.get("/settings/public")
@@ -248,23 +250,35 @@ export default function Register() {
                   </div>
                   <div>
                     <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">Senha</label>
-                    <input
-                      data-testid={REGISTER.passwordInput}
-                      required type="password" autoComplete="new-password" minLength={6}
-                      value={form.password} onChange={set("password")}
-                      placeholder="Mínimo 6 caracteres"
-                      className={`mt-2 ${inputCls}`}
-                    />
+                    <div className="relative mt-2">
+                      <input
+                        data-testid={REGISTER.passwordInput}
+                        required type={showPwd ? "text" : "password"} autoComplete="new-password" minLength={6}
+                        value={form.password} onChange={set("password")}
+                        placeholder="Mínimo 6 caracteres"
+                        className={`${inputCls} pr-12`}
+                      />
+                      <button type="button" data-testid="register-password-toggle" onClick={() => setShowPwd((s) => !s)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-black" aria-label="Mostrar senha">
+                        {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-xs font-bold uppercase tracking-widest text-zinc-700">Confirmar senha</label>
-                    <input
-                      data-testid={REGISTER.passwordConfirmInput}
-                      required type="password" autoComplete="new-password" minLength={6}
-                      value={form.password_confirm} onChange={set("password_confirm")}
-                      placeholder="Repita a senha"
-                      className={`mt-2 ${inputCls}`}
-                    />
+                    <div className="relative mt-2">
+                      <input
+                        data-testid={REGISTER.passwordConfirmInput}
+                        required type={showPwd2 ? "text" : "password"} autoComplete="new-password" minLength={6}
+                        value={form.password_confirm} onChange={set("password_confirm")}
+                        placeholder="Repita a senha"
+                        className={`${inputCls} pr-12`}
+                      />
+                      <button type="button" data-testid="register-password-confirm-toggle" onClick={() => setShowPwd2((s) => !s)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-black" aria-label="Mostrar senha">
+                        {showPwd2 ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </section>

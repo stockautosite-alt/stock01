@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api, { fileUrl } from "@/lib/api";
 import { MapPin, Star, Search, Building2 } from "lucide-react";
-import { UF_LIST } from "@/lib/format";
+import { UF_STATES } from "@/lib/format";
 
 export default function DealerList() {
   const [dealers, setDealers] = useState([]);
@@ -62,10 +62,10 @@ export default function DealerList() {
               onChange={(e) => setUf(e.target.value)}
               className="bg-white text-black h-12 px-4 text-sm font-bold uppercase tracking-tight"
             >
-              <option value="">Todas UF</option>
-              {UF_LIST.map((u) => (
-                <option key={u} value={u}>
-                  {u}
+              <option value="">Todos os estados</option>
+              {UF_STATES.map((u) => (
+                <option key={u.code} value={u.code}>
+                  {u.code} - {u.name}
                 </option>
               ))}
             </select>

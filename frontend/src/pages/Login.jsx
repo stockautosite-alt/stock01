@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { LOGIN } from "@/constants/testIds";
-import { ArrowRight, Lock, Mail } from "lucide-react";
+import { ArrowRight, Lock, Mail, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const { login } = useAuth();
@@ -12,6 +12,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
 
   const redirectFor = (user) => {
     const to = location.state?.from;
@@ -109,7 +110,7 @@ export default function Login() {
                 <Lock size={18} className="text-zinc-500" />
                 <input
                   data-testid={LOGIN.passwordInput}
-                  type="password"
+                  type={showPwd ? "text" : "password"}
                   required
                   autoComplete="current-password"
                   value={password}
@@ -117,6 +118,15 @@ export default function Login() {
                   placeholder="••••••••"
                   className="flex-1 ml-3 outline-none bg-transparent text-base"
                 />
+                <button
+                  type="button"
+                  data-testid="login-password-toggle"
+                  onClick={() => setShowPwd((s) => !s)}
+                  className="text-zinc-400 hover:text-black p-1"
+                  aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 

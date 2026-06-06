@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api, { fileUrl } from "@/lib/api";
-import { brl, km, waLink, digits } from "@/lib/format";
+import { brl, km, waLink, digits, txLabel, fuelLabel } from "@/lib/format";
 import WhatsAppButton, { WhatsAppIcon } from "@/components/WhatsAppButton";
 import { DETAIL } from "@/constants/testIds";
-import { MapPin, Phone, Share2, Copy, ArrowLeft, Check, Calendar, Gauge, Fuel, Settings, Palette } from "lucide-react";
+import { MapPin, Phone, Share2, Copy, ArrowLeft, Check, Calendar, Gauge, Fuel, Settings, Palette, ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
 
 export default function VehicleDetail() {
   const { slug } = useParams();
@@ -12,6 +12,7 @@ export default function VehicleDetail() {
   const [error, setError] = useState(null);
   const [active, setActive] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
 
   useEffect(() => {
     setV(null);
@@ -96,17 +97,26 @@ export default function VehicleDetail() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-10">
         {/* GALLERY */}
         <div className="lg:col-span-8" data-testid={DETAIL.gallery}>
-          <div className="aspect-[4/3] bg-zinc-100 overflow-hidden border border-zinc-200">
+          <button
+            type="button"
+            onClick={() => photo && setLightbox(true)}
+            className="group relative w-full aspect-[4/3] bg-zinc-100 overflow-hidden border border-zinc-200 cursor-zoom-in"
+          >
             {photo ? (
-              <img
-                src={fileUrl(photo)}
-                alt={`${title} ${v.year_model} em ${v.city} - ${v.uf}${dealer.store_name ? ` - Revenda ${dealer.store_name}` : ""}`}
-                className="w-full h-full object-cover"
-              />
+              <>
+                <img
+                  src={fileUrl(photo)}
+                  alt={`${title} ${v.year_model} em ${v.city} - ${v.uf}${dealer.store_name ? ` - Revenda ${dealer.store_name}` : ""}`}
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 bg-black/70 text-white text-xs font-bold uppercase tracking-tight px-3 py-1.5 opacity-90 group-hover:opacity-100">
+                  <ZoomIn size={14} /> Ampliar
+                </span>
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-zinc-400">sem foto</div>
             )}
-          </div>
+          </button>
           {photos.length > 1 && (
             <div className="mt-3 grid grid-cols-4 sm:grid-cols-6 gap-2">
               {photos.map((p, i) => (
@@ -129,8 +139,8 @@ export default function VehicleDetail() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-zinc-200 border border-zinc-200">
               <Spec icon={<Calendar size={16} />} label="Ano" value={`${v.year_made}/${v.year_model}`} />
               <Spec icon={<Gauge size={16} />} label="KM" value={km(v.km)} />
-              <Spec icon={<Settings size={16} />} label="Câmbio" value={v.transmission || "—"} />
-              <Spec icon={<Fuel size={16} />} label="Combustível" value={v.fuel || "—"} />
+              <Spec icon={<Settings size={16} />} label="Câmbio" value={txLabel(v.transmission)} />
+              <Spec icon={<Fuel size={16} />} label="Combustível" value={fuelLabel(v.fuel)} />
               <Spec icon={<Palette size={16} />} label="Cor" value={v.color || "—"} />
               <Spec icon={<MapPin size={16} />} label="Local" value={`${v.city}/${v.uf}`} />
             </div>
@@ -244,23 +254,82 @@ export default function VehicleDetail() {
       </div>
 
       {/* STICKY MOBILE CTA */}
-      {dealer.whatsapp && (
-        <div className="fixed md:hidden bottom-0 left-0 right-0 z-40 bg-white border-t border-zinc-200 p-3 flex items-center gap-3 shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
-          <div className="flex-1">
+      {(dealer.whatsapp || dealer.phone) && (
+        <div className="fixed md:hidden bottom-0 left-0 right-0 z-40 bg-white border-t border-zinc-200 p-3 flex items-center gap-2 shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
+          <div className="flex-1 min-w-0">
             <div className="text-[10px] uppercase tracking-widest text-zinc-500">Preço</div>
-            <div className="text-lg font-black tracking-tighter text-[#FF3B30]" style={{ fontFamily: "Cabinet Grotesk" }}>
+            <div className="text-base font-black tracking-tighter text-[#FF3B30] truncate" style={{ fontFamily: "Cabinet Grotesk" }}>
               {brl(v.price)}
             </div>
           </div>
-          <a
-            href={waLink(dealer.whatsapp, waMessage)}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-testid={DETAIL.whatsappStickyMobile}
-            className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1DA851] text-white px-5 h-12 text-sm font-bold uppercase tracking-tight"
+          {dealer.phone && (
+            <a
+              href={`tel:${digits(dealer.phone)}`}
+              data-testid="detail-call-dealer-mobile"
+              className="inline-flex items-center justify-center border border-zinc-300 h-12 px-4 text-sm font-bold uppercase tracking-tight hover:border-black"
+              aria-label="Ligar para o vendedor"
+            >
+              <Phone size={18} />
+            </a>
+          )}
+          {dealer.whatsapp && (
+            <a
+              href={waLink(dealer.whatsapp, waMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid={DETAIL.whatsappStickyMobile}
+              className="inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1DA851] text-white px-5 h-12 text-sm font-bold uppercase tracking-tight"
+            >
+              <WhatsAppIcon size={18} /> WhatsApp
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* LIGHTBOX */}
+      {lightbox && photos.length > 0 && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center"
+          data-testid="detail-lightbox"
+          onClick={() => setLightbox(false)}
+        >
+          <button
+            onClick={() => setLightbox(false)}
+            data-testid="detail-lightbox-close"
+            className="absolute top-5 right-5 text-white/80 hover:text-white p-2"
+            aria-label="Fechar"
           >
-            <WhatsAppIcon size={18} /> WhatsApp
-          </a>
+            <X size={28} />
+          </button>
+          {photos.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setActive((a) => (a - 1 + photos.length) % photos.length); }}
+              data-testid="detail-lightbox-prev"
+              className="absolute left-3 sm:left-6 text-white/80 hover:text-white p-2"
+              aria-label="Anterior"
+            >
+              <ChevronLeft size={40} />
+            </button>
+          )}
+          <img
+            src={fileUrl(photos[active])}
+            alt={`${title} ${active + 1}`}
+            className="max-h-[85vh] max-w-[90vw] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          {photos.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setActive((a) => (a + 1) % photos.length); }}
+              data-testid="detail-lightbox-next"
+              className="absolute right-3 sm:right-6 text-white/80 hover:text-white p-2"
+              aria-label="Próxima"
+            >
+              <ChevronRight size={40} />
+            </button>
+          )}
+          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-white/80 text-sm font-bold">
+            {active + 1} / {photos.length}
+          </div>
         </div>
       )}
     </div>

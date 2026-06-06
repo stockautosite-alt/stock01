@@ -76,6 +76,14 @@ def slugify(text: str) -> str:
     return text
 
 
+def norm_choice(s):
+    """Normalize a select value (transmission/fuel) to lowercase ascii for consistent filtering."""
+    if not s:
+        return s
+    s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode("ascii")
+    return s.lower().strip()
+
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
@@ -278,6 +286,8 @@ class AdminUserUpdateIn(BaseModel):
     status: Optional[str] = None  # pending / active / blocked
     plan_code: Optional[str] = None
     store_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
     phone: Optional[str] = None
     whatsapp: Optional[str] = None
     city: Optional[str] = None
@@ -452,6 +462,8 @@ async def list_vehicles(
     category: Optional[str] = None,
     brand: Optional[str] = None,
     model: Optional[str] = None,
+    transmission: Optional[str] = None,
+    fuel: Optional[str] = None,
     year_min: Optional[int] = None,
     year_max: Optional[int] = None,
     price_min: Optional[float] = None,
@@ -471,6 +483,10 @@ async def list_vehicles(
         filt["brand"] = {"$regex": f"^{re.escape(brand)}$", "$options": "i"}
     if model:
         filt["model"] = {"$regex": re.escape(model), "$options": "i"}
+    if transmission:
+        filt["transmission"] = norm_choice(transmission)
+    if fuel:
+        filt["fuel"] = norm_choice(fuel)
     if year_min or year_max:
         filt["year_model"] = {}
         if year_min:
@@ -669,6 +685,17 @@ async def admin_update_user(uid: str, body: AdminUserUpdateIn, user: dict = Depe
     if not target:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     update = {k: v for k, v in body.model_dump().items() if v is not None}
+    if "email" in update:
+        new_email = str(update["email"]).lower().strip()
+        if new_email != target.get("email") and await db.users.find_one({"email": new_email, "id": {"$ne": uid}}):
+            raise HTTPException(status_code=400, detail="E-mail já cadastrado por outro usuário")
+        update["email"] = new_email
+    if "password" in update:
+        pwd = update.pop("password")
+        if pwd:
+            if len(pwd) < 6:
+                raise HTTPException(status_code=400, detail="A senha deve ter ao menos 6 caracteres")
+            update["password_hash"] = hash_password(pwd)
     if "uf" in update and update["uf"]:
         update["uf"] = update["uf"].upper()
     if "plan_code" in update:
@@ -1004,6 +1031,20 @@ async def seed_campo_grande():
     logger.info("Seed: Campo Grande — 2 revendedores e 6 anúncios criados")
 
 
+async def normalize_vehicle_choices():
+    """One-time data hygiene: normalize transmission/fuel to lowercase ascii so filters match."""
+    async for v in db.vehicles.find({}, {"id": 1, "transmission": 1, "fuel": 1, "_id": 0}):
+        upd = {}
+        t = norm_choice(v.get("transmission"))
+        f = norm_choice(v.get("fuel"))
+        if t is not None and t != v.get("transmission"):
+            upd["transmission"] = t
+        if f is not None and f != v.get("fuel"):
+            upd["fuel"] = f
+        if upd:
+            await db.vehicles.update_one({"id": v["id"]}, {"$set": upd})
+
+
 @app.on_event("startup")
 async def on_startup():
     await db.users.create_index("email", unique=True)
@@ -1015,6 +1056,7 @@ async def on_startup():
     await seed_admin()
     await seed_demo()
     await seed_campo_grande()
+    await normalize_vehicle_choices()
     await get_settings()
 
 
